@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 //use anchor_spl::token::{self, Mint, SetAuthority, TokenAccount, Transfer};
 use std::mem::size_of;
 
-declare_id!("3Z3dWerEbF5RGtcu7S3avuKRMSnHr8tUoJ69AhEWSDHM");
+declare_id!("Cjn97wB2nmcrAeaTtMNSfAqNiVZdBhPLUd9pXDMHdagS");
 
 #[program]
 pub mod demo {
