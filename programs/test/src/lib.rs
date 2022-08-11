@@ -2,10 +2,10 @@ use anchor_lang::prelude::*;
 //use anchor_spl::token::{self, Mint, SetAuthority, TokenAccount, Transfer};
 use std::mem::size_of;
 
-declare_id!("Cjn97wB2nmcrAeaTtMNSfAqNiVZdBhPLUd9pXDMHdagS");
+declare_id!("3joWEmJ4LkanMRPR5yFqXKU3zoy41kkw6mGjc8crpV55");
 
 #[program]
-pub mod demo {
+pub mod test {
     use super::*;
 
     pub fn initialize_vault(
@@ -43,7 +43,7 @@ pub mod demo {
         Ok(())
     }
 
-    pub fn transfer_winner(ctx: Context<TransferWinner>) -> Result<()>  {
+    pub fn transfer_winner(ctx: Context<TransferWinner>, address : String) -> Result<()>  {
         // What is the data from game server
         
         // transfer from vault to winner
@@ -52,6 +52,16 @@ pub mod demo {
         **ctx.accounts.vault.to_account_info().try_borrow_mut_lamports()? -= amount;
         **ctx.accounts.winner.try_borrow_mut_lamports()? += amount;
 
+        Ok(())
+    }
+
+    pub fn reset_vault(ctx: Context<ResetVault>) -> Result<()> {
+        let vault = &mut ctx.accounts.vault;
+        vault.amount = 0;
+        // what is null empty pubkey type or overwrite
+        vault.winner =  0;
+        vault.players[0] =  0;
+        vault.players[1] =  0;
         Ok(())
     }
 }
@@ -68,7 +78,7 @@ pub struct InitializeVault<'info> {
     #[account(
         init,
         payer = initializer,
-        space = 8 + 32, 
+        space = 1000, 
         seeds = [b"vault", initializer.key().as_ref()], 
         bump
     )]
@@ -81,7 +91,9 @@ pub struct InitializeVault<'info> {
 pub struct Vault {
     owner: Pubkey,
     amount : u64,
-    // not sure if need any more members
+    // not sure if need any more members, maybe should separate into game instance
+    players: [Pubkey; 2],
+    winner: Pubkey,
 }
 
 #[derive(Accounts)]
@@ -115,4 +127,20 @@ pub struct TransferWinner<'info> {
   pub winner: AccountInfo<'info>,
 
   pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct ResetVault<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
+
+    #[account(mut, signer)]
+    pub payer: AccountInfo<'info>,
+
+    #[account(
+        mut,
+        constraint = vault.owner == payer.key()
+    )]
+    pub vault: Account<'info, Vault>,
+
+    pub system_program: Program<'info, System>
 }
