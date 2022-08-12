@@ -16,7 +16,9 @@ describe("test", () => {
   const provider = anchor.AnchorProvider.local();
   anchor.setProvider(provider)
   //anchor.setProvider(anchor.AnchorProvider.env());
-  const connection = anchor.getProvider().connection;
+  //const connection = anchor.getProvider().connection;
+  //const connection = new Connection("https://api.mainnet-beta.solana.com");
+  const connection = new Connection('https://api.devnet.solana.com')
   const program = anchor.workspace.Test as Program<Test>;
 
   //const signer = anchor.web3.Keypair.fromSecretKey()
@@ -24,20 +26,25 @@ describe("test", () => {
     const vaultKeyPair = anchor.web3.Keypair.generate()
     const testAddress = anchor.web3.Keypair.generate()
     
-    const balance = await connection.getBalance(testAddress.publicKey)
+    const balance = (await connection.getBalance(testAddress.publicKey))/LAMPORTS_PER_SOL
     console.log('START')
-    console.log(balance)
+    console.log(`test balance :  ${balance}`);
     
     // airdrop 1 SOL
     // localnet airdrop not working
-    const temp = await connection.requestAirdrop(testAddress.publicKey,1000000000)
-    
+    const signature = await connection.requestAirdrop(testAddress.publicKey,LAMPORTS_PER_SOL *2)
+    await connection.confirmTransaction(signature)
+    console.log('AIRDROPPING TO TEST WALLET')
+    const newBalance = (await connection.getBalance(testAddress.publicKey))/LAMPORTS_PER_SOL
+    console.log(`new test balance :  ${newBalance}`);
 
-    const mainBalance = await connection.getBalance(provider.wallet.publicKey)
-    console.log(mainBalance)
+
+    const mainBalance = (await connection.getBalance(provider.wallet.publicKey))/LAMPORTS_PER_SOL
+    console.log(`new main wallet balance :  ${mainBalance}`);
     
 
     // transfer from main wallet to new ones
+    /*
     const transferTransaction = new Transaction().add(
       SystemProgram.transfer({
         fromPubkey: provider.wallet.publicKey,
@@ -45,11 +52,10 @@ describe("test", () => {
         lamports: 1000000000,
       })
     );
-    // how to setup signature for 
-    await sendAndConfirmTransaction(connection, transferTransaction, []);
-
-    const newBalance = await connection.getBalance(testAddress.publicKey)
-    console.log(newBalance)
+    
+    await sendAndConfirmTransaction(connection, transferTransaction, [provider.wallet]);
+    */
+    
 
     await program.methods
       .initializeVault()
@@ -60,9 +66,10 @@ describe("test", () => {
       })
       .signers([vaultKeyPair])
 
-      
+    //await program.methods.transferVault
     
-      
+    const vaultBalance = (await connection.getBalance(vaultKeyPair.publicKey))/LAMPORTS_PER_SOL 
+    console.log(`vault balance :  ${vaultBalance}`);
     //let vaultAccount = await program.account.vault.fetch(provider.wallet.publicKey);
 
     //assert.ok(vaultAccount.owner.equals(provider.wallet.publicKey));
