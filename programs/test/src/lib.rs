@@ -16,7 +16,7 @@ pub mod test {
         vault.owner = ctx.accounts.initializer.key();
         Ok(())
     }
-
+    
     // transfer native sol to vault
     pub fn transfer_vault(
         ctx: Context<TransferVault>,
@@ -36,6 +36,23 @@ pub mod test {
             ],
         )?;
 
+        /*
+        invoke(
+            &sol_transfer,
+            &[
+                ctx.accounts.from.clone(),
+                ctx.accounts.to.clone(),
+                ctx.accounts.system_program.clone(),
+            ],
+        )?;
+         */
+        
+    /*
+       
+
+    */
+
+
         // update vault balance when increment
         let vault = &mut ctx.accounts.vault;
         vault.amount += amount;
@@ -49,6 +66,7 @@ pub mod test {
         // transfer from vault to winner
         let amount = ctx.accounts.vault.amount;
         //let mut amount : u64 = 10
+        // transfer program owned account to any other account
         **ctx.accounts.vault.to_account_info().try_borrow_mut_lamports()? -= amount;
         **ctx.accounts.winner.try_borrow_mut_lamports()? += amount;
 
@@ -59,11 +77,15 @@ pub mod test {
         let vault = &mut ctx.accounts.vault;
         vault.amount = 0;
         // what is null empty pubkey type or overwrite
+        /*
         vault.winner =  0;
         vault.players[0] =  0;
         vault.players[1] =  0;
+        */
         Ok(())
     }
+
+
 }
 
 
@@ -103,10 +125,7 @@ pub struct TransferVault<'info> {
     #[account(mut, signer)]
     pub payer: AccountInfo<'info>,
 
-    #[account(
-        mut,
-        constraint = vault.owner == payer.key()
-    )]
+    #[account(mut)]
     pub vault: Account<'info, Vault>,
 
     pub system_program: Program<'info, System>
@@ -124,6 +143,7 @@ pub struct TransferWinner<'info> {
   )]
   pub vault: Account<'info, Vault>,
   /// CHECK: This is not dangerous because we don't read or write from this account
+  #[account(mut)]
   pub winner: AccountInfo<'info>,
 
   pub system_program: Program<'info, System>,
