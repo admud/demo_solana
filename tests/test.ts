@@ -13,7 +13,7 @@ const assert = require("assert");
 
 describe("test", () => {
   // Configure the client to use the local cluster.
-  const provider = anchor.AnchorProvider.local();
+  const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider)
   //anchor.setProvider(anchor.AnchorProvider.env());
   //const connection = anchor.getProvider().connection;
@@ -26,7 +26,7 @@ describe("test", () => {
     const vaultKeyPair = anchor.web3.Keypair.generate()
     const testAddress = anchor.web3.Keypair.generate()
     
-    const balance = (await connection.getBalance(testAddress.publicKey))/LAMPORTS_PER_SOL
+    const balance = (await connection.getBalance(testAddress.publicKey))
     console.log('START')
     console.log(`test balance :  ${balance}`);
     
@@ -35,11 +35,11 @@ describe("test", () => {
     const signature = await connection.requestAirdrop(testAddress.publicKey,LAMPORTS_PER_SOL *2)
     await connection.confirmTransaction(signature)
     console.log('AIRDROPPING TO TEST WALLET')
-    const newBalance = (await connection.getBalance(testAddress.publicKey))/LAMPORTS_PER_SOL
+    const newBalance = (await connection.getBalance(testAddress.publicKey))
     console.log(`new test balance :  ${newBalance}`);
 
 
-    const mainBalance = (await connection.getBalance(provider.wallet.publicKey))/LAMPORTS_PER_SOL
+    const mainBalance = (await connection.getBalance(provider.wallet.publicKey))
     console.log(`new main wallet balance :  ${mainBalance}`);
     
 
@@ -65,10 +65,30 @@ describe("test", () => {
         systemProgram: SystemProgram.programId,
       })
       .signers([vaultKeyPair])
-
-    //await program.methods.transferVault
+      //.rpc()
+      
+    console.log('-------------------------------'); 
+    console.log('transferring from main wallet to vault');
+    /*  
+    await program.methods.transferVault(new anchor.BN(1)).accounts
+    ({
+      payer: provider.wallet.publicKey,
+      vault: vaultKeyPair.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
+    //.rpc()
     
-    const vaultBalance = (await connection.getBalance(vaultKeyPair.publicKey))/LAMPORTS_PER_SOL 
+    */
+    await program.methods.transferNativeSol(new anchor.BN(1)).accounts
+    ({
+      from: testAddress.publicKey,
+      to: vaultKeyPair.publicKey,
+      user: provider.wallet.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
+    //.rpc()
+
+    const vaultBalance = (await connection.getBalance(vaultKeyPair.publicKey)) 
     console.log(`vault balance :  ${vaultBalance}`);
     //let vaultAccount = await program.account.vault.fetch(provider.wallet.publicKey);
 

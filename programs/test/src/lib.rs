@@ -14,6 +14,7 @@ pub mod test {
        
         let vault = &mut ctx.accounts.vault;
         vault.owner = ctx.accounts.initializer.key();
+        vault.amount = 0;
         Ok(())
     }
     
@@ -85,6 +86,17 @@ pub mod test {
         Ok(())
     }
 
+    pub fn transfer_native_sol(ctx: Context<Transfer>, amount:u64) -> Result<()> {
+        
+        let from = ctx.accounts.from.to_account_info();
+        let to = ctx.accounts.to.to_account_info();
+
+        // Debit from_account and credit to_account
+        **from.try_borrow_mut_lamports()? -= amount;
+        **to.try_borrow_mut_lamports()? += amount;
+
+        Ok(())
+    }
 
 }
 
@@ -100,7 +112,7 @@ pub struct InitializeVault<'info> {
     #[account(
         init,
         payer = initializer,
-        space = 1000, 
+        space = 2000, 
         seeds = [b"vault", initializer.key().as_ref()], 
         bump
     )]
@@ -114,8 +126,8 @@ pub struct Vault {
     owner: Pubkey,
     amount : u64,
     // not sure if need any more members, maybe should separate into game instance
-    players: [Pubkey; 2],
-    winner: Pubkey,
+    //players: [Pubkey; 2],
+    //winner: Pubkey,
 }
 
 #[derive(Accounts)]
@@ -163,4 +175,17 @@ pub struct ResetVault<'info> {
     pub vault: Account<'info, Vault>,
 
     pub system_program: Program<'info, System>
+}
+
+#[derive(Accounts)]
+pub struct Transfer<'info> {
+    #[account(mut)]
+    /// CHECK: This is not dangerous
+    pub from: AccountInfo<'info>,
+    #[account(mut)]
+    /// CHECK: This is not dangerous because we just pay to this account
+    pub to: AccountInfo<'info>,
+    #[account()]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
 }
