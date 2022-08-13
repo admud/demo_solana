@@ -15,6 +15,7 @@ pub mod test {
         let vault = &mut ctx.accounts.vault;
         vault.owner = ctx.accounts.initializer.key();
         vault.amount = 0;
+        
         Ok(())
     }
     
@@ -102,7 +103,7 @@ pub mod test {
 #[derive(Accounts)]
 pub struct InitializeVault<'info> {
     /// CHECK: This is not dangerous because we don't read or write from this account
-    #[account(mut,signer)]
+    #[account(mut)]
     pub initializer: AccountInfo<'info>,
 
     //pub mint: Account<'info, Mint>,
@@ -122,8 +123,8 @@ pub struct InitializeVault<'info> {
 #[account]
 #[derive(Default)]
 pub struct Vault {
-    owner: Pubkey,
-    amount : u64,
+    pub owner: Pubkey,
+    pub amount : u64,
     // not sure if need any more members, maybe should separate into game instance
     //players: [Pubkey; 2],
     //winner: Pubkey,

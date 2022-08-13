@@ -12,6 +12,7 @@ import {
 import { utf8 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 const assert = require("assert");
 
+
 describe("test", () => {
   // Configure the client to use the local cluster.
   const provider = anchor.AnchorProvider.env();
@@ -19,13 +20,15 @@ describe("test", () => {
   //anchor.setProvider(anchor.AnchorProvider.env());
   //const connection = anchor.getProvider().connection;
   //const connection = new Connection("https://api.mainnet-beta.solana.com");
-  //const connection = new Connection('https://api.devnet.solana.com')
-  const connection = new Connection('https://api.devnet.solana.com', "confirmed")
+  const connection = new Connection('https://api.devnet.solana.com')
+  //const connection = new Connection('https://api.devnet.solana.com', "confirmed")
   const program = anchor.workspace.Test as Program<Test>;
 
+
+  const vaultKeyPair = anchor.web3.Keypair.generate()
   //const signer = anchor.web3.Keypair.fromSecretKey()
   it('init vault', async () => {
-    const vaultKeyPair = anchor.web3.Keypair.generate()
+    
     const testAddress = anchor.web3.Keypair.generate()
     
     const balance = (await connection.getBalance(testAddress.publicKey))
@@ -59,7 +62,7 @@ describe("test", () => {
     */
     
     const [vaultPDA] = await anchor.web3.PublicKey.findProgramAddress(
-      [utf8.encode('vault')
+      [anchor.utils.bytes.utf8.encode('vault'), provider.wallet.publicKey.toBuffer()
     ],program.programId
     );
 
@@ -75,7 +78,8 @@ describe("test", () => {
        */ 
     console.log(provider.wallet.publicKey.toString())
     console.log(SystemProgram.programId.toString())
-    
+
+
     await program.methods
       .initializeVault()
       .accounts({
@@ -84,7 +88,7 @@ describe("test", () => {
         systemProgram: anchor.web3.SystemProgram.programId,
       })
       // does the provider wallet sign this by defaullt?
-      .signers([])
+      //.signers([vaultKeyPair])
       .rpc()
     
 
