@@ -9,6 +9,7 @@ import {
   Transaction,
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
+import { utf8 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 const assert = require("assert");
 
 describe("test", () => {
@@ -18,7 +19,8 @@ describe("test", () => {
   //anchor.setProvider(anchor.AnchorProvider.env());
   //const connection = anchor.getProvider().connection;
   //const connection = new Connection("https://api.mainnet-beta.solana.com");
-  const connection = new Connection('https://api.devnet.solana.com')
+  //const connection = new Connection('https://api.devnet.solana.com')
+  const connection = new Connection('https://api.devnet.solana.com', "confirmed")
   const program = anchor.workspace.Test as Program<Test>;
 
   //const signer = anchor.web3.Keypair.fromSecretKey()
@@ -56,29 +58,61 @@ describe("test", () => {
     await sendAndConfirmTransaction(connection, transferTransaction, [provider.wallet]);
     */
     
+    const [vaultPDA] = await anchor.web3.PublicKey.findProgramAddress(
+      [utf8.encode('vault')
+    ],program.programId
+    );
 
+  /*
+    await program.rpc.initializeVault({
+      accounts: {
+        initializer: provider.wallet.publicKey,
+        vault: vaultPDA,
+        systemProgram : anchor.web3.SystemProgram.programId,
+      },
+      signers:[],
+    });
+       */ 
+    console.log(provider.wallet.publicKey.toString())
+    console.log(SystemProgram.programId.toString())
+    
     await program.methods
       .initializeVault()
       .accounts({
         initializer: provider.wallet.publicKey,
         vault: vaultKeyPair.publicKey,
-        systemProgram: SystemProgram.programId,
+        systemProgram: anchor.web3.SystemProgram.programId,
       })
-      .signers([vaultKeyPair])
-      //.rpc()
-      
+      // does the provider wallet sign this by defaullt?
+      .signers([])
+      .rpc()
+    
+
     console.log('-------------------------------'); 
     console.log('transferring from main wallet to vault');
-    /*  
+    
+    /*
+    await program.rpc.transferVault(new anchor.BN(1),{
+      accounts: {
+        payer: testAddress.publicKey,
+        vault: vaultKeyPair.publicKey,
+        systemProgram : anchor.web3.SystemProgram.programId,
+      },
+    });
+    */
+
+    
     await program.methods.transferVault(new anchor.BN(1)).accounts
     ({
       payer: provider.wallet.publicKey,
       vault: vaultKeyPair.publicKey,
-      systemProgram: SystemProgram.programId,
+      systemProgram: anchor.web3.SystemProgram.programId,
     })
-    //.rpc()
+    .signers([])
+    .rpc()
     
-    */
+    
+    /*
     await program.methods.transferNativeSol(new anchor.BN(1)).accounts
     ({
       from: testAddress.publicKey,
@@ -86,8 +120,8 @@ describe("test", () => {
       user: provider.wallet.publicKey,
       systemProgram: SystemProgram.programId,
     })
-    //.rpc()
-
+    .rpc()
+    */
     const vaultBalance = (await connection.getBalance(vaultKeyPair.publicKey)) 
     console.log(`vault balance :  ${vaultBalance}`);
     //let vaultAccount = await program.account.vault.fetch(provider.wallet.publicKey);

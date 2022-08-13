@@ -48,24 +48,21 @@ pub mod test {
         )?;
          */
         
-    /*
-       
-
-    */
-
-
         // update vault balance when increment
+
         let vault = &mut ctx.accounts.vault;
         vault.amount += amount;
 
         Ok(())
     }
 
-    pub fn transfer_winner(ctx: Context<TransferWinner>, address : String) -> Result<()>  {
+    pub fn transfer_winner(ctx: Context<TransferWinner>, lamports : u64) -> Result<()>  {
         // What is the data from game server
-        
+
+        let to_transfer = lamports;
         // transfer from vault to winner
         let amount = ctx.accounts.vault.amount;
+
         //let mut amount : u64 = 10
         // transfer program owned account to any other account
         **ctx.accounts.vault.to_account_info().try_borrow_mut_lamports()? -= amount;
@@ -76,7 +73,8 @@ pub mod test {
 
     pub fn reset_vault(ctx: Context<ResetVault>) -> Result<()> {
         let vault = &mut ctx.accounts.vault;
-        vault.amount = 0;
+
+        //vault.amount = 0;
         // what is null empty pubkey type or overwrite
         /*
         vault.winner =  0;
@@ -104,7 +102,7 @@ pub mod test {
 #[derive(Accounts)]
 pub struct InitializeVault<'info> {
     /// CHECK: This is not dangerous because we don't read or write from this account
-    #[account(mut, signer)]
+    #[account(mut,signer)]
     pub initializer: AccountInfo<'info>,
 
     //pub mint: Account<'info, Mint>,
@@ -112,8 +110,8 @@ pub struct InitializeVault<'info> {
     #[account(
         init,
         payer = initializer,
-        space = 2000, 
-        seeds = [b"vault", initializer.key().as_ref()], 
+        space = size_of::<Vault>(), 
+        seeds = [b"vault".as_ref(), initializer.key().as_ref()], 
         bump
     )]
     pub vault: Account<'info, Vault>,
@@ -122,6 +120,7 @@ pub struct InitializeVault<'info> {
 
 
 #[account]
+#[derive(Default)]
 pub struct Vault {
     owner: Pubkey,
     amount : u64,
