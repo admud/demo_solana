@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 //use anchor_spl::token::{self, Mint, SetAuthority, TokenAccount, Transfer};
 use std::mem::size_of;
 
-declare_id!("3joWEmJ4LkanMRPR5yFqXKU3zoy41kkw6mGjc8crpV55");
+declare_id!("7xd5qmpcKx3BPRJZLduGmvjxSXPoDuTFBHt9UDMBVCjH");
 
 #[program]
 pub mod test {
@@ -19,6 +19,27 @@ pub mod test {
         Ok(())
     }
     
+    pub fn transfer_sol(
+        ctx: Context<TransferSol>,
+        
+        amount: u64,
+    ) -> Result<()> {
+        let ix = anchor_lang::solana_program::system_instruction::transfer(
+            &ctx.accounts.from.key(),
+            &ctx.accounts.to.key(),
+          
+            amount ,
+        );
+        anchor_lang::solana_program::program::invoke(
+            &ix,
+            &[
+                ctx.accounts.from.to_account_info(),
+                ctx.accounts.to.to_account_info()
+            ],
+        )?;
+        
+        Ok(())
+    }
     // transfer native sol to vault
     pub fn transfer_vault(
         ctx: Context<TransferVault>,
@@ -28,7 +49,7 @@ pub mod test {
             &ctx.accounts.payer.key(),
             &ctx.accounts.vault.key(),
           
-            amount,
+            amount ,
         );
         anchor_lang::solana_program::program::invoke(
             &ix,
@@ -102,26 +123,26 @@ pub mod test {
 
 #[derive(Accounts)]
 pub struct InitializeVault<'info> {
-    /// CHECK: This is not dangerous because we don't read or write from this account
     #[account(mut)]
-    pub initializer: AccountInfo<'info>,
+    pub initializer: Signer<'info>,
 
     //pub mint: Account<'info, Mint>,
     
     #[account(
         init,
         payer = initializer,
-        space = size_of::<Vault>(), 
+        space = 9000, 
         seeds = [b"vault".as_ref(), initializer.key().as_ref()], 
         bump
     )]
     pub vault: Account<'info, Vault>,
-    pub system_program: Program<'info, System>
+    pub system_program: Program<'info, System>,
+    pub rent: Sysvar<'info, Rent>
 }
 
 
 #[account]
-#[derive(Default)]
+// #[derive(Default)]
 pub struct Vault {
     pub owner: Pubkey,
     pub amount : u64,
@@ -179,13 +200,27 @@ pub struct ResetVault<'info> {
 
 #[derive(Accounts)]
 pub struct Transfer<'info> {
-    #[account(mut)]
+    #[account(mut,signer)]
     /// CHECK: This is not dangerous
     pub from: AccountInfo<'info>,
     #[account(mut)]
     /// CHECK: This is not dangerous because we just pay to this account
     pub to: AccountInfo<'info>,
-    #[account()]
-    pub user: Signer<'info>,
+    
+    //#[account()]
+    //pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct TransferSol<'info> {
+    /// CHECK: This is not dangerous because we don't read or write from this account
+
+    #[account(mut, signer)]
+    pub from: AccountInfo<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(mut)]
+    pub to: AccountInfo<'info>,
+
+    pub system_program: Program<'info, System>
 }
