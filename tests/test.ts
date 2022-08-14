@@ -21,9 +21,9 @@ describe("test", () => {
   //anchor.setProvider(anchor.AnchorProvider.env());
   //const connection = anchor.getProvider().connection;
   //const connection = new Connection("https://api.mainnet-beta.solana.com");
-  const connection = new Connection('https://rpc.ankr.com/solana_devnet',"confirmed")
+  //const connection = new Connection('https://rpc.ankr.com/solana_devnet',"confirmed")
   //const connection =new Connection('https://solana-devnet-rpc.allthatnode.com')
-  //const connection = new Connection('https://api.devnet.solana.com', "confirmed")
+  const connection = new Connection('https://api.devnet.solana.com', "confirmed")
   const program = anchor.workspace.Test as Program<Test>;
 
   //const vaultKeyPair = anchor.web3.Keypair.generate()
@@ -62,10 +62,10 @@ describe("test", () => {
     console.log(`player 1 balance : ${tempbalance}`)
 
     */
-
+    /*
     const signaturetest = await connection.requestAirdrop(testAddress.publicKey,LAMPORTS_PER_SOL *1)
     await connection.confirmTransaction(signaturetest)
-
+    
     const signature1 = await connection.requestAirdrop(player1Address.publicKey,LAMPORTS_PER_SOL *1)
     await connection.confirmTransaction(signature1)
     console.log('AIRDROPPING TO player1 WALLET')
@@ -81,7 +81,7 @@ describe("test", () => {
     const mainBalance = (await connection.getBalance(provider.wallet.publicKey))
     console.log(`new main wallet balance :  ${mainBalance}`);
     
-    
+    */
 
 
     // transfer from main wallet to new ones
@@ -100,10 +100,11 @@ describe("test", () => {
     
     
     const [vaultPDA] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(anchor.utils.bytes.utf8.encode('vault')), testAddress.publicKey.toBuffer()
+      [Buffer.from(anchor.utils.bytes.utf8.encode('vault')), provider.wallet.publicKey.toBuffer()
     ],program.programId
     );
-
+    
+    // seems this line below : vault already exist
   /*
     await program.rpc.initializeVault({
       accounts: {
@@ -116,18 +117,35 @@ describe("test", () => {
        */ 
 
 
-    await program.methods
-      .initializeVault()
-      .accounts({
-        // initializer: testAddress.publicKey,
-        initializer: testAddress.publicKey,
-        vault: vaultPDA,
-        systemProgram: anchor.web3.SystemProgram.programId,
-      })
-      // does the provider wallet sign this by defaullt?
-      .signers([testAddress])
-      .rpc()
     
+
+    const temp1 = await program.methods.transferSol(new anchor.BN(0.1*1e9)).accounts
+    ({
+      from: provider.wallet.publicKey,
+      to: player1Address.publicKey,
+      systemProgram: anchor.web3.SystemProgram.programId,
+    })
+    .signers([])
+    .rpc()
+    
+    await connection.confirmTransaction(temp1)
+    const newBalance1 = (await connection.getBalance(player1Address.publicKey))
+    console.log(`new player1 balance :  ${newBalance1}`);
+
+
+    const temp2 = await program.methods.transferSol(new anchor.BN(0.2*1e9)).accounts
+    ({
+      from: provider.wallet.publicKey,
+      to: player2Address.publicKey,
+      systemProgram: anchor.web3.SystemProgram.programId,
+    })
+    .signers([])
+    .rpc()
+    
+    await connection.confirmTransaction(temp2)
+    const newBalance2 = (await connection.getBalance(player2Address.publicKey))
+    console.log(`new player1 balance :  ${newBalance2}`);
+
 
     console.log('-------------------------------'); 
     console.log('transferring from player1 wallet to vault');
@@ -192,8 +210,25 @@ describe("test", () => {
     //assert.ok(vaultAccount.amount.toNumber() === 0);
 
     // vault transfer to winner
+    
+    const winner_before = (await connection.getBalance(player1Address.publicKey)) 
 
-    const winnerAddress= anchor.web3.Keypair.generate()
+    console.log(`winner balance before :  ${winner_before}`);
+
+    // transfer all lamports from vault to winner
+    const winner = await program.methods.transferWinner(new anchor.BN(0.3*1e9)).accounts
+    ({
+      vault: vaultPDA,
+      winner: player1Address.publicKey,
+      systemProgram: anchor.web3.SystemProgram.programId,
+    })
+    .signers([])
+    .rpc()
+    
+    await connection.confirmTransaction(winner)
+    const winner_after = (await connection.getBalance(player1Address.publicKey)) 
+
+    console.log(`winner balance after:  ${winner_after}`);
 
 
   })
