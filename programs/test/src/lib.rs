@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 //use anchor_spl::token::{self, Mint, SetAuthority, TokenAccount, Transfer};
 use std::mem::size_of;
 
-declare_id!("3joWEmJ4LkanMRPR5yFqXKU3zoy41kkw6mGjc8crpV55");
+declare_id!("8Ph1EN9S7HLo4yrDVFWXChe27ixWhuQTdryPyYc5a24b");
 
 #[program]
 pub mod test {
@@ -59,17 +59,6 @@ pub mod test {
             ],
         )?;
 
-        /*
-        invoke(
-            &sol_transfer,
-            &[
-                ctx.accounts.from.clone(),
-                ctx.accounts.to.clone(),
-                ctx.accounts.system_program.clone(),
-            ],
-        )?;
-         */
-        
         // update vault balance when increment
 
         let vault = &mut ctx.accounts.vault;
@@ -79,7 +68,7 @@ pub mod test {
     }
 
     pub fn transfer_winner(ctx: Context<TransferWinner>, lamports : u64) -> Result<()>  {
-        // What is the data from game server
+        // data coming from server
 
         let to_transfer = lamports;
         // transfer from vault to winner
@@ -96,13 +85,13 @@ pub mod test {
     pub fn reset_vault(ctx: Context<ResetVault>) -> Result<()> {
         let vault = &mut ctx.accounts.vault;
 
-        //vault.amount = 0;
+        vault.amount = 0;
         // what is null empty pubkey type or overwrite
-        /*
-        vault.winner =  0;
-        vault.players[0] =  0;
-        vault.players[1] =  0;
-        */
+
+        // vault.winner =  0;
+        // vault.players[0] =  0;
+        // vault.players[1] =  0;
+        
         Ok(())
     }
 
@@ -137,7 +126,7 @@ pub struct InitializeVault<'info> {
     )]
     pub vault: Account<'info, Vault>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>
+    //pub rent: Sysvar<'info, Rent>
 }
 
 
@@ -208,7 +197,7 @@ pub struct Transfer<'info> {
     pub to: AccountInfo<'info>,
     
     //#[account()]
-    //pub user: Signer<'info>,
+    pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
